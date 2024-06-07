@@ -1,4 +1,5 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const app = express();
 const bodyPaser = require('body-parser');
 
@@ -8,6 +9,12 @@ const mongoose = require('mongoose');
 const ObjectId = require('mongodb').ObjectId;
 
 app.use(bodyPaser.json());
+
+
+
+// Secret key for signing JWT tokens
+const secretKey = 'mysecret2024';
+
 
 
 mongoose.connect("mongodb+srv://devzonedo:7rT2AtRR10iZzoI7@cluster0.qrgeuyp.mongodb.net/crudappdb?retryWrites=true&w=majority&appName=Cluster0")
@@ -29,10 +36,64 @@ app.use((req,res,next)=>{
 });
 
 
+// Middleware for validating bearer token
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log('token:'+token);
+
+    if (token == null) return res.sendStatus(401);
+
+    jwt.verify(token, secretKey, (err, user) => {
+        if (err) return res.sendStatus(403);
+        console.log('user:'+user);
+        req.user = user;
+        next();
+    });
+}
+
+
 
 app.use((req,res,next) => {
     console.log('this is from express');
     next();
+});
+
+
+// Authenticate user and generate token
+app.post('/api/login', (req, res) => {
+    // Authenticate user and generate token
+    const username = req.body.username;
+    const user = { username: username };
+
+    const accessToken = jwt.sign(user, secretKey);
+    res.json({ accessToken: accessToken });
+});
+
+
+//protected endpoint with jwt token autentication
+app.get('/api/protected', authenticateToken, (req, res) => {
+    console.log(req.user);
+    res.json(req.user);
+});
+
+//protected endpoint with jwt token autentication
+app.post('/api/home', authenticateToken, (req, res) => {
+    console.log('-S-----------');
+    console.log(req.user);
+    console.log('-E-----------');
+
+    const post = new Post({
+        title: req.body.title,
+        content: req.body.content,
+    });
+
+    console.log(post);
+    res.status(200).json({
+        message:"post added successfully",
+        post: post
+    });
+
 });
 
 
@@ -97,7 +158,6 @@ app.get('/api/post/:id',(req,res,next)=>{
 
 
 
-
 app.put('/api/posts/:id', async (req,res,next)=>{
 console.log('PUT>>/api/posts/:id');
 const postId = req.params.id;
@@ -133,8 +193,6 @@ return res.status(500).json({
     });
 
 });
-
-
 
 
 

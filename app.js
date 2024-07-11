@@ -1,67 +1,59 @@
 const express = require('express');
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const morgan = require('morgan');
+const helmet = require('helmet');
 
-
-// external routes 
+// Import external routes
 const postsRoutes = require('./routes/posts');
 const usersRoutes = require('./routes/users');
 const tasksRoutes = require('./routes/tasks');
 
-
 const app = express();
-const bodyPaser = require('body-parser');
 
-const Post = require('./models/post.js');
+// Middleware
+app.use(bodyParser.json());
+app.use(morgan('dev')); // Logger
+app.use(helmet()); // Security
 
-const mongoose = require('mongoose');
-const ObjectId = require('mongodb').ObjectId;
+// Database connection
+const mongoURI = process.env.MONGO_URI;
+mongoose.connect(mongoURI)
+  .then(() => {
+    console.log("Database connected successfully.");
+  })
+  .catch((error) => {
+    console.error("Error in database connection:", error);
+  });
 
-app.use(bodyPaser.json());
-
-
-mongoose.connect("mongodb+srv://devzonedo:7rT2AtRR10iZzoI7@cluster0.qrgeuyp.mongodb.net/crudappdb?retryWrites=true&w=majority&appName=Cluster0")
-.then(()=>{
-    console.log("database connected successfully..");
-})
-.catch(()=>{
-    console.log("error in database connection");
+// CORS setup
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  next();
 });
 
+// Custom middleware for logging
+// app.use((req, res, next) => {
+//   console.log('This is from express');
+//   next();
+// });
 
+// Access custom routes
+app.use('/api/posts', postsRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/tasks', tasksRoutes);
 
-
-app.use((req,res,next)=>{
-    res.setHeader("Access-Control-Allow-Origin","*");
-    res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With , Content-Type , Accept");
-    res.setHeader("Access-Control-Allow-Methods","GET, POST, PATCH, DELETE, OPTIONS");
-    next();
+// Health check route
+app.get("/healthcheck", (req, res) => {
+  res.status(200).json({ message: "Server is running..." });
 });
 
-
-
-app.use((req,res,next) => {
-    console.log('this is from express');
-    next();
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
-
-
-
-
-// access custom routes 
-app.use('/api/post',postsRoutes);
-app.use('/api/user',usersRoutes);
-app.use('/api/task',tasksRoutes);
-
-
-
-app.get("/healthcheck",(req,res,next)=>{
-    console.log(">>/healthcheck");
-    res.status(200).json({
-        message: "server running ...... "
-    });
-});
-
-
-
-
 
 module.exports = app;

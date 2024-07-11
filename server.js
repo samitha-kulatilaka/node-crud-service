@@ -1,14 +1,35 @@
+require('dotenv').config();
 const http = require('http');
 const app = require('./app.js');
 
-const port = process.env.port || 3000;
+const port = process.env.PORT || 3000;
+app.set('port', port);
 
-app.set('port',port);
 const server = http.createServer(app);
 
-// const server = http.createServer((req,res)=>{
-//     console.log('server running......');
-//     res.end("this is response");
-// });
+server.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
 
-server.listen(3000);
+// Optional: Add error handling
+server.on('error', (error) => {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+
+  // Handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(`${bind} requires elevated privileges`);
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(`${bind} is already in use`);
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+});

@@ -1,14 +1,38 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
-// this is schema blue print 
-const userSchema = mongoose.Schema({
-    email: { type: String , require: true },
-    username: { type: String , require: true , unique: true},
-    password: { type: String , require: true }
+// Define the schema blueprint
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  password: { type: String, required: true }
+}, {
+  timestamps: true // Automatically adds createdAt and updatedAt fields
 });
 
+// Middleware to hash the password before saving
+userSchema.pre('save', async function (next) {
+  try {
+    if (!this.isModified('password')) {
+      return next();
+    }
 
-module.exports = mongoose.model('User' , userSchema);
+    const hashedPassword = await bcrypt.hash(this.password, 10);
+    this.password = hashedPassword;
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
+// Method to compare passwords
+// userSchema.methods.comparePassword = async function (candidatePassword) {
+//   try {
+//     return await bcrypt.compare(candidatePassword, this.password);
+//   } catch (error) {
+//     throw new Error('Password comparison failed');
+//   }
+// };
 
-
+// Export the model based on the schema
+module.exports = mongoose.model('User', userSchema);

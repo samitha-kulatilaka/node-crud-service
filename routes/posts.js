@@ -12,11 +12,11 @@ router.post("/", async (req, res) => {
       content: req.body.content
     });
 
-    const createdPost = await post.save();
+    await post.save();
 
     res.status(201).json({
       message: "Post added successfully",
-      post: createdPost
+      post: post
     });
   } catch (error) {
     console.error(error);
@@ -85,7 +85,7 @@ router.put('/:id', async (req, res) => {
       post: updatedPost
     });
   } catch (error) {
-    console.error('Error in update record:', error);
+    console.error(error);
     res.status(500).json({
       message: "Internal server error"
     });

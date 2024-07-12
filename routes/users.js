@@ -5,7 +5,7 @@ const User = require('../models/user.js');
 
 // POST /api/users/register
 router.post("/register", async (req, res) => {
-  const { email, username, password } = req.body;
+  const { email, username, password, type } = req.body;
 
   try {
     // Check if the user already exists
@@ -23,7 +23,8 @@ router.post("/register", async (req, res) => {
     const newUser = new User({
       email,
       username,
-      password
+      password,
+      type
     });
 
     // Save the user to the database
@@ -34,6 +35,7 @@ router.post("/register", async (req, res) => {
       user: {
         username: newUser.username,
         email: newUser.email,
+        type: newUser.type,
         id: newUser._id
       }
     });
@@ -74,6 +76,7 @@ router.post("/login", async (req, res) => {
       user: {
         username: user.username,
         email: user.email,
+        type: user.type,
         id: user._id
       }
     });

@@ -5,7 +5,13 @@ const bcrypt = require('bcryptjs');
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true },
   username: { type: String, required: true, unique: true },
-  password: { type: String, required: true }
+  password: { type: String, required: true },
+  type: {
+    type: String,
+    enum: ['USER', 'ADMIN'],
+    required: true,
+    default: 'USER'
+  }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields
 });

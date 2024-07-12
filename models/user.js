@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 
 // Define the schema blueprint
 const userSchema = new mongoose.Schema({
-  email: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
   username: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   type: {
@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     default: 'USER'
   }
 }, {
-  timestamps: true // Automatically adds createdAt and updatedAt fields
+  timestamps: true
 });
 
 // Middleware to hash the password before saving

@@ -3,13 +3,34 @@ const router = express.Router();
 const { ObjectId } = require('mongodb');
 
 const Post = require('../models/post.js');
+const User = require('../models/user.js');
 
 // POST /api/posts/
 router.post("/", async (req, res) => {
   try {
+    // Capture user ID from request header
+    const userId = req.headers['user-id'];
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required in the request header"
+      });
+    }
+
+    // Ensure the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    const { title, content } = req.body;
+
     const post = new Post({
-      title: req.body.title,
-      content: req.body.content
+      title,
+      content,
+      userId
     });
 
     await post.save();
@@ -29,7 +50,25 @@ router.post("/", async (req, res) => {
 // GET /api/posts
 router.get('/', async (req, res) => {
   try {
-    const posts = await Post.find();
+    // Capture user ID from request header
+    const userId = req.headers['user-id'];
+
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required in the request header"
+      });
+    }
+
+    // Ensure the user exists
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found"
+      });
+    }
+
+    const posts = await Post.find({ userId });
+      // .populate('userId', 'username email'); // Populate the user details
     res.status(200).json({
       message: "List all posts",
       posts: posts

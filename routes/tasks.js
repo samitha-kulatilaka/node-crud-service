@@ -1,88 +1,73 @@
 const express = require('express');
 const router = express.Router();
+const { ObjectId } = require('mongodb');
 
-const ObjectId = require('mongodb').ObjectId;
+const { CategoryModel, TaskModel, getTasksWithCategory } = require('../models/task');
 
+// Create a new category
+router.post('/category', async (req, res) => {
+  try {
+    const { name } = req.body;
 
-const { CategoryModel, TaskModel , getTasksWithCategory } = require('../models/task.js');
+    if (!name) {
+      return res.status(400).json({ message: 'Category name is required' });
+    }
 
+    const category = new CategoryModel({ name });
+    await category.save();
 
-// create categories 
-router.post("/category", (req,res,next)=>{
-    console.log('tasks>>category');
-
-
-    const category = new CategoryModel({
-        name: req.body.name
+    res.status(201).json({
+      message: 'Category created successfully',
+      data: category,
     });
-
-    category.save();
-
-    res.status(200).json({
-        message: "category created successfully",
-        data: category
-    });
-
+  } catch (error) {
+    console.error('Error creating category:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
 
+// Create a new task
+router.post('/add', async (req, res) => {
+  try {
+    const { category_id, title, content } = req.body;
 
-
-
-
-
-
-
-router.post("/add", (req,res,next)=>{
-    console.log('tasks>>add');
-
+    if (!category_id || !title || !content) {
+      return res.status(400).json({
+        message: 'Category ID, title, and content are required',
+      });
+    }
 
     const task = new TaskModel({
-        categoryObjectId: new ObjectId(req.body.category_id),
-        title:req.body.title,
-        content:req.body.content
+      categoryObjectId: new ObjectId(category_id),
+      title,
+      content,
     });
 
+    await task.save();
 
-    task.save();
+    res.status(201).json({
+      message: 'Task created successfully',
+      data: task,
+    });
+  } catch (error) {
+    console.error('Error creating task:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
+
+// Get list of tasks with categories
+router.get('/list', async (req, res) => {
+  try {
+    const tasks = await getTasksWithCategory();
 
     res.status(200).json({
-        message: "task created successfully",
-        data: task
+      message: 'Task list retrieved successfully',
+      tasks,
     });
-
+  } catch (error) {
+    console.error('Error retrieving task list:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 });
-
-
-
-
-
-
-router.get("/list", (req,res,next)=>{
-    console.log('tasks>>list');
-
-
-    getTasksWithCategory().then((document) => {
-
-        console.log(document);
-
-        res.status(200).json({
-            message: "task list extracted successfully",
-            tasks: document
-        });
-
-
-    });
-
-   
-
-});
-
-
-
-
-
-
-
-
 
 module.exports = router;
